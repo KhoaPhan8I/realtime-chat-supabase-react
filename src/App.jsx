@@ -7,7 +7,7 @@ import Chat from "./components/Chat";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AppContextProvider, useAppContext } from "./context/appContext";
 
-function App() {
+function ChatApp() {
   const { username, setUsername, routeHash } = useAppContext();
 
   if (routeHash) {
@@ -24,26 +24,33 @@ function App() {
         </div>
       );
   }
+
+  return (
+    <Box bg="gray.100">
+      <Router>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <>
+                <Header />
+                <Chat />
+                <Footer />
+              </>
+            }
+          />
+          <Route path="*" element={<p>Not found</p>} />
+        </Routes>
+      </Router>
+    </Box>
+  );
+}
+
+function App() {
   return (
     <Provider>
       <AppContextProvider>
-        <Box bg="gray.100">
-          <Router>
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <>
-                    <Header />
-                    <Chat />
-                    <Footer />
-                  </>
-                }
-              />
-              <Route path="*" element={<p>Not found</p>} />
-            </Routes>
-          </Router>
-        </Box>
+        <ChatApp />
       </AppContextProvider>
     </Provider>
   );
