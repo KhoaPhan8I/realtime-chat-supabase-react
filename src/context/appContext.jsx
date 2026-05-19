@@ -85,20 +85,31 @@ const AppContextProvider = ({ children }) => {
   const getInitialMessages = useCallback(async () => {
     if (messages.length) return;
 
-    const { data, error } = await supabase
-      .from("messages")
-      .select()
-      .range(0, MESSAGES_PER_PAGE)
-      .order("id", { ascending: false });
-
-    setLoadingInitial(false);
-    if (error) {
-      setError(error.message);
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_KEY) {
+      setError("Cảnh báo: Bạn chưa cài đặt biến môi trường Supabase! Hãy thêm VITE_SUPABASE_URL và VITE_SUPABASE_KEY vào thiết lập Vercel.");
+      setLoadingInitial(false);
       return;
     }
 
-    setIsInitialLoad(true);
-    setMessages(data);
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select()
+        .range(0, MESSAGES_PER_PAGE)
+        .order("id", { ascending: false });
+
+      setLoadingInitial(false);
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      setIsInitialLoad(true);
+      setMessages(data);
+    } catch (e) {
+      setError("Lỗi kết nối Supabase: " + e.message);
+      setLoadingInitial(false);
+    }
   }, [messages.length]);
 
   const createChannelSubscription = useCallback(() => {
@@ -125,10 +136,25 @@ const AppContextProvider = ({ children }) => {
     if (hasInitializedRef.current) return;
     hasInitializedRef.current = true;
 
-    // Initialize user session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      initializeUser(session);
-    });
+    let authSubscription = null;
+
+    if (supabase && supabase.auth) {
+      // Initialize user session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        initializeUser(session);
+      });
+
+      // Listen for auth state changes
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        console.log("onAuthStateChange", { _event, session });
+        initializeUser(session);
+      });
+      if (data && data.subscription) {
+        authSubscription = data.subscription;
+      }
+    } else {
+      initializeUser(null);
+    }
 
     // Load messages and subscribe to real-time updates
     getMessagesAndSubscribe();
@@ -141,22 +167,16 @@ const AppContextProvider = ({ children }) => {
       getLocation();
     }
 
-    // Listen for auth state changes
-    const {
-      data: { subscription: authSubscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("onAuthStateChange", { _event, session });
-      initializeUser(session);
-    });
-
     return () => {
       // Cleanup: remove channel subscription
-      if (myChannelRef.current) {
+      if (myChannelRef.current && supabase && typeof supabase.removeChannel === "function") {
         supabase.removeChannel(myChannelRef.current);
         myChannelRef.current = null;
       }
 
-      authSubscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
       hasInitializedRef.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
