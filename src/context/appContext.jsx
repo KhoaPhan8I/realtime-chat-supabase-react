@@ -5,9 +5,15 @@ const AppContext = createContext({});
 
 // Constants
 const MESSAGES_PER_PAGE = 49;
-const CHAT_CHANNEL_NAME = "custom-all-channel";
 const LOCATION_API_URL = "https://api.db-ip.com/v2/free/self";
 const SCROLL_THRESHOLD = 1; // pixels from bottom to consider "at bottom"
+
+export const ROOMS = [
+  { id: "general", name: "General" },
+  { id: "tech", name: "Tech" },
+  { id: "random", name: "Random" },
+  { id: "gaming", name: "Gaming" },
+];
 
 const AppContextProvider = ({ children }) => {
   // Refs
@@ -19,6 +25,11 @@ const AppContextProvider = ({ children }) => {
   const [username, setUsername] = useState("");
   const [session, setSession] = useState(null);
   const [countryCode, setCountryCode] = useState("");
+
+  // Room state
+  const [activeRoom, setActiveRoom] = useState("general");
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [typingUsers, setTypingUsers] = useState([]);
 
   // Messages state
   const [messages, setMessages] = useState([]);
@@ -77,14 +88,19 @@ const AppContextProvider = ({ children }) => {
 
   // Message handlers
   const handleNewMessage = useCallback((payload) => {
-    setMessages((prevMessages) => [payload.new, ...prevMessages]);
-    // Trigger effect to check if we should scroll or show notification
-    setNewIncomingMessageTrigger(payload.new);
-  }, []);
+    if (payload.new && payload.new.room === activeRoom) {
+      setMessages((prevMessages) => {
+        if (prevMessages.some((msg) => msg.id === payload.new.id)) {
+          return prevMessages;
+        }
+        return [payload.new, ...prevMessages];
+      });
+      // Trigger effect to check if we should scroll or show notification
+      setNewIncomingMessageTrigger(payload.new);
+    }
+  }, [activeRoom]);
 
-  const getInitialMessages = useCallback(async () => {
-    if (messages.length) return;
-
+  const getInitialMessages = useCallback(async (roomName) => {
     if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_KEY) {
       setError("Cảnh báo: Bạn chưa cài đặt biến môi trường Supabase! Hãy thêm VITE_SUPABASE_URL và VITE_SUPABASE_KEY vào thiết lập Vercel.");
       setLoadingInitial(false);
@@ -92,9 +108,11 @@ const AppContextProvider = ({ children }) => {
     }
 
     try {
+      setLoadingInitial(true);
       const { data, error } = await supabase
         .from("messages")
         .select()
+        .eq("room", roomName)
         .range(0, MESSAGES_PER_PAGE)
         .order("id", { ascending: false });
 
@@ -110,28 +128,81 @@ const AppContextProvider = ({ children }) => {
       setError("Lỗi kết nối Supabase: " + e.message);
       setLoadingInitial(false);
     }
-  }, [messages.length]);
+  }, []);
 
-  const createChannelSubscription = useCallback(() => {
-    if (myChannelRef.current) return;
+  const createChannelSubscription = useCallback((roomName, currentUsername, currentCountry) => {
+    if (myChannelRef.current) {
+      supabase.removeChannel(myChannelRef.current);
+      myChannelRef.current = null;
+    }
 
-    myChannelRef.current = supabase
-      .channel(CHAT_CHANNEL_NAME)
+    const channelName = `room:${roomName}`;
+    const channel = supabase.channel(channelName, {
+      config: {
+        presence: {
+          key: currentUsername,
+        },
+      },
+    });
+
+    myChannelRef.current = channel;
+
+    channel
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "messages" },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
         handleNewMessage
       )
-      .subscribe();
+      .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState();
+        const users = [];
+        const typing = [];
+
+        Object.keys(state).forEach((key) => {
+          const presences = state[key];
+          if (presences && presences.length > 0) {
+            const latest = presences[presences.length - 1];
+            users.push({
+              username: key,
+              country: latest.country || "Unknown",
+              isTyping: latest.isTyping || false,
+            });
+
+            if (latest.isTyping && key !== currentUsername) {
+              typing.push(key);
+            }
+          }
+        });
+
+        setOnlineUsers(users);
+        setTypingUsers(typing);
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await channel.track({
+            country: currentCountry || "Unknown",
+            isTyping: false,
+            online_at: new Date().toISOString(),
+          });
+        }
+      });
   }, [handleNewMessage]);
 
-  const getMessagesAndSubscribe = useCallback(async () => {
-    setError("");
-    await getInitialMessages();
-    createChannelSubscription();
-  }, [getInitialMessages, createChannelSubscription]);
+  const updateTypingStatus = useCallback(async (isTyping) => {
+    if (myChannelRef.current) {
+      await myChannelRef.current.track({
+        country: countryCode || "Unknown",
+        isTyping: isTyping,
+        online_at: new Date().toISOString(),
+      });
+    }
+  }, [countryCode]);
 
-  // Initialize app: auth, messages, location, and subscriptions
+  // Initialize app: auth and location
   useEffect(() => {
     if (hasInitializedRef.current) return;
     hasInitializedRef.current = true;
@@ -156,9 +227,6 @@ const AppContextProvider = ({ children }) => {
       initializeUser(null);
     }
 
-    // Load messages and subscribe to real-time updates
-    getMessagesAndSubscribe();
-
     // Load country code from localStorage or fetch from API
     const storedCountryCode = localStorage.getItem("countryCode");
     if (storedCountryCode && storedCountryCode !== "undefined") {
@@ -168,12 +236,6 @@ const AppContextProvider = ({ children }) => {
     }
 
     return () => {
-      // Cleanup: remove channel subscription
-      if (myChannelRef.current && supabase && typeof supabase.removeChannel === "function") {
-        supabase.removeChannel(myChannelRef.current);
-        myChannelRef.current = null;
-      }
-
       if (authSubscription) {
         authSubscription.unsubscribe();
       }
@@ -181,6 +243,24 @@ const AppContextProvider = ({ children }) => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Room Subscription effect: runs when activeRoom, username, or countryCode changes
+  useEffect(() => {
+    if (!username) return;
+
+    setMessages([]);
+    setError("");
+
+    getInitialMessages(activeRoom);
+    createChannelSubscription(activeRoom, username, countryCode);
+
+    return () => {
+      if (myChannelRef.current && supabase && typeof supabase.removeChannel === "function") {
+        supabase.removeChannel(myChannelRef.current);
+        myChannelRef.current = null;
+      }
+    };
+  }, [activeRoom, username, countryCode, getInitialMessages, createChannelSubscription]);
 
   // Handle new incoming messages: scroll if from current user, otherwise show notification
   useEffect(() => {
@@ -210,6 +290,7 @@ const AppContextProvider = ({ children }) => {
       const { data, error } = await supabase
         .from("messages")
         .select()
+        .eq("room", activeRoom)
         .range(messages.length, messages.length + MESSAGES_PER_PAGE)
         .order("id", { ascending: false });
 
@@ -230,7 +311,6 @@ const AppContextProvider = ({ children }) => {
         messages,
         loadingInitial,
         error,
-        getMessagesAndSubscribe,
         username,
         setUsername,
         randomUsername,
@@ -242,6 +322,11 @@ const AppContextProvider = ({ children }) => {
         country: countryCode,
         unviewedMessageCount,
         session,
+        activeRoom,
+        setActiveRoom,
+        onlineUsers,
+        typingUsers,
+        updateTypingStatus,
       }}
     >
       {children}

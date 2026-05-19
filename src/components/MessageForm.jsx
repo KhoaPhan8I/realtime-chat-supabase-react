@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input, Stack, IconButton, Box, Container } from "@chakra-ui/react";
 import { toaster } from "@/components/ui/toaster";
 import { BiSend } from "react-icons/bi";
@@ -6,15 +6,42 @@ import { useAppContext } from "../context/appContext";
 import supabase from "../supabaseClient";
 
 export default function MessageForm() {
-  const { username, country, session } = useAppContext();
+  const { username, country, session, activeRoom, updateTypingStatus } = useAppContext();
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const typingTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleInputChange = (e) => {
+    setMessage(e.target.value);
+    updateTypingStatus(true);
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      updateTypingStatus(false);
+    }, 2000);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const trimmed = message.trim();
     if (!trimmed) return;
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    updateTypingStatus(false);
 
     setIsSending(true);
 
@@ -24,6 +51,7 @@ export default function MessageForm() {
           text: trimmed,
           username,
           country,
+          room: activeRoom,
           is_authenticated: !!session,
         },
       ]);
@@ -53,19 +81,19 @@ export default function MessageForm() {
 
   return (
     <Box py="10px" pt="15px" bg="gray.100">
-      <Container maxW="600px">
+      <Container maxW="1200px">
         <form onSubmit={handleSubmit} autoComplete="off">
           <Stack direction="row">
             <Input
               name="message"
-              placeholder="Enter a message"
-              onChange={(e) => setMessage(e.target.value)}
+              placeholder={`Message #${activeRoom}`}
+              onChange={handleInputChange}
               value={message}
               bg="white"
               border="none"
               autoFocus
               maxLength="500"
-              color= "black"
+              color="black"
             />
             <IconButton
               background="teal"
@@ -80,7 +108,7 @@ export default function MessageForm() {
             </IconButton>
           </Stack>
         </form>
-        <Box fontSize="10px" mt="1">
+        <Box fontSize="10px" mt="1" color="gray.500">
           Warning: do not share any sensitive information, it’s a public chat
           room 🙂
         </Box>
