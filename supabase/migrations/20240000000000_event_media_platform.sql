@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS event_photos (
   thumbnail_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
   likes INTEGER DEFAULT 0,
-  is_approved BOOLEAN DEFAULT TRUE, -- Defaulting to TRUE for MVP as requested "approved items", but can be set to FALSE for moderation
+  is_approved BOOLEAN DEFAULT TRUE, -- Defaulting to TRUE for MVP
   ai_tags JSONB DEFAULT '[]'::jsonb
 );
 
@@ -41,3 +41,19 @@ CREATE POLICY "Anonymous guest upload" ON event_photos
 -- Enable Realtime
 ALTER PUBLICATION supabase_realtime ADD TABLE events;
 ALTER PUBLICATION supabase_realtime ADD TABLE event_photos;
+
+-- STORAGE SETUP
+-- Create a new bucket 'event-media'
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('event-media', 'event-media', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Allow public access to 'event-media' bucket
+CREATE POLICY "Public Access"
+ON storage.objects FOR SELECT
+USING ( bucket_id = 'event-media' );
+
+-- Allow anonymous uploads to 'event-media' bucket
+CREATE POLICY "Anonymous Upload"
+ON storage.objects FOR INSERT
+WITH CHECK ( bucket_id = 'event-media' );
