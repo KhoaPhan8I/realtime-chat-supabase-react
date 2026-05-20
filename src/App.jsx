@@ -6,6 +6,10 @@ import Footer from "./layout/Footer";
 import Chat from "./components/Chat";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AppContextProvider, useAppContext } from "./context/appContext";
+import EventJoin from "./pages/event/EventJoin";
+import EventGallery from "./pages/event/EventGallery";
+import EventUpload from "./pages/event/EventUpload";
+import EventSlideshow from "./pages/event/EventSlideshow";
 
 function ChatApp() {
   const { username, setUsername, routeHash } = useAppContext();
@@ -39,6 +43,10 @@ function ChatApp() {
               </>
             }
           />
+          <Route path="/event/:eventId" element={<EventJoin />} />
+          <Route path="/event/:eventId/gallery" element={<EventGallery />} />
+          <Route path="/event/:eventId/upload" element={<EventUpload />} />
+          <Route path="/event/:eventId/slideshow" element={<EventSlideshow />} />
           <Route path="*" element={<p>Not found</p>} />
         </Routes>
       </Router>
