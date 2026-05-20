@@ -1,11 +1,12 @@
 {
-  "name": "realtime-chat-supabase-react",
-  "version": "0.3.0",
-  "private": false,
-  "author": "Shimon Wosner",
+  "name": "locket-widget",
+  "version": "1.0.0",
+  "private": true,
+  "author": "KhoaPhan8I",
+  "description": "Locket Widget — realtime event photo/video sharing app",
   "repository": {
     "type": "git",
-    "url": "https://github.com/shwosner/realtime-chat-supabase-react"
+    "url": "https://github.com/KhoaPhan8I/realtime-chat-supabase-react"
   },
   "type": "module",
   "dependencies": {

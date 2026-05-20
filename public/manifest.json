@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Locket",
+  "name": "Locket Widget",
+  "description": "Chia sẻ khoảnh khắc sự kiện theo thời gian thực",
   "icons": [
     {
       "src": "favicon.ico",
@@ -18,8 +19,9 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/event",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#020617",
+  "background_color": "#020617",
+  "orientation": "portrait"
 }

@@ -4,10 +4,11 @@ import "./App.css";
 import Header from "./layout/Header";
 import Footer from "./layout/Footer";
 import Chat from "./components/Chat";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import EventMedia from "./components/EventMedia";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AppContextProvider, useAppContext } from "./context/appContext";
 
-function ChatApp() {
+function LocketApp() {
   const { username, setUsername, routeHash } = useAppContext();
 
   if (routeHash) {
@@ -17,9 +18,9 @@ function ChatApp() {
     if (routeHash.startsWith("#error_code=404"))
       return (
         <div>
-          <p>This link has expired</p>
+          <p>Link đã hết hạn</p>
           <a href="/" style={{ cursor: "pointer" }} variant="link">
-            Back to app
+            Quay lại Locket
           </a>
         </div>
       );
@@ -29,8 +30,14 @@ function ChatApp() {
     <Box bg="gray.100">
       <Router>
         <Routes>
+          {/* Locket Widget — default landing */}
+          <Route path="/" element={<EventMedia />} />
+          <Route path="/event" element={<EventMedia />} />
+          <Route path="/event/:eventId" element={<EventMedia />} />
+
+          {/* Legacy chat (giữ lại) */}
           <Route
-            path="/"
+            path="/chat"
             element={
               <>
                 <Header />
@@ -39,7 +46,8 @@ function ChatApp() {
               </>
             }
           />
-          <Route path="*" element={<p>Not found</p>} />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </Box>
@@ -50,7 +58,7 @@ function App() {
   return (
     <Provider>
       <AppContextProvider>
-        <ChatApp />
+        <LocketApp />
       </AppContextProvider>
     </Provider>
   );

@@ -121,3 +121,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .vercel
+.claude
+__pycache__/
+*.png
+*.jpg
+*.jpeg
+*.gif
+

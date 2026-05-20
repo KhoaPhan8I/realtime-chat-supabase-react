@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
-import supabase from "../supabaseClient";
+import supabase, { isSupabaseConfigured } from "../supabaseClient";
 
 const AppContext = createContext({});
 
@@ -209,7 +209,7 @@ const AppContextProvider = ({ children }) => {
 
     let authSubscription = null;
 
-    if (supabase && supabase.auth) {
+    if (isSupabaseConfigured && supabase && supabase.auth) {
       // Initialize user session
       supabase.auth.getSession().then(({ data: { session } }) => {
         initializeUser(session);
@@ -250,6 +250,11 @@ const AppContextProvider = ({ children }) => {
 
     setMessages([]);
     setError("");
+
+    if (!isSupabaseConfigured) {
+      setLoadingInitial(false);
+      return;
+    }
 
     getInitialMessages(activeRoom);
     createChannelSubscription(activeRoom, username, countryCode);

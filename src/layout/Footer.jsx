@@ -1,5 +1,5 @@
 import { Box, Grid, GridItem } from "@chakra-ui/react";
-import { FaGithub, FaTwitter } from "react-icons/fa";
+import { FaGithub } from "react-icons/fa";
 import MessageForm from "../components/MessageForm";
 export default function Footer() {
   return (
@@ -16,24 +16,12 @@ export default function Footer() {
         bg="white"
       >
         <GridItem justifySelf="start">
-          {/* Built by{" "} */}
-          {/* <a href="http://shimon-wosner.vercel.app" target="_blank"> */}
           <a
-            href="https://twitter.com/shwosner"
+            href="https://github.com/KhoaPhan8I/realtime-chat-supabase-react"
             target="_blank"
             rel="noreferrer"
           >
-            <FaTwitter style={{ display: "inline" }} />
-            @shwosner
-          </a>
-        </GridItem>
-        <GridItem justifySelf="end">
-          <a
-            href="https://github.com/shwosner/realtime-chat-supabase-react"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <FaGithub style={{ display: "inline" }} /> Source code
+            <FaGithub style={{ display: "inline" }} /> Locket Widget
           </a>
         </GridItem>
       </Grid>
