@@ -1,5 +1,1 @@
-{
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
-  ]
-}
+{"rewrites":[{"source":"/(.*)","destination":"/"}],"buildCommand":"npm run build","outputDirectory":"dist","env":{"VITE_SUPABASE_URL":"https://pvuyoidmaiqloiumywoq.supabase.co","VITE_SUPABASE_KEY":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2dXlvaWRtYWlxbG9pdW15d29xIiwibm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MTgzNDcsImV4cCI6MjA4Nzk5NDM0N30.r2ZWwsz1q0FB3KBrqIgPRvIz6TiDn6qt5XvPFiMZ1M","VITE_EVENT_ID":"wedding-demo","VITE_MEDIA_BUCKET":"event-media"}}
