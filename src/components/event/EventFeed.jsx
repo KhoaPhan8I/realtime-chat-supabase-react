@@ -47,6 +47,7 @@ export default function EventFeed({
               )}
             </HStack>
             <Text fontWeight="bold">{activeItem.guest_name}</Text>
+            {activeItem.caption && <Text fontSize="sm" color="orange.300" fontStyle="italic" mb="1">{activeItem.caption}</Text>}
             <Text fontSize="sm" opacity="0.75">{activeItem.table_id || "vừa đăng"}</Text>
             <ReactionTray
               mediaId={activeItem.id}

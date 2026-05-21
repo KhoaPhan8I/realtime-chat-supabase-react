@@ -139,7 +139,7 @@ export async function addReaction({ eventId, mediaId, emoji, guestName }) {
   return data;
 }
 
-export async function uploadEventMedia({ eventId, file, guestName, tableId }) {
+export async function uploadEventMedia({ eventId, file, guestName, tableId, caption }) {
   if (!isSupabaseConfigured) {
     throw new Error("Chưa cấu hình VITE_SUPABASE_URL và VITE_SUPABASE_KEY.");
   }
@@ -176,6 +176,7 @@ export async function uploadEventMedia({ eventId, file, guestName, tableId }) {
       storage_path: storagePath,
       thumbnail_url: null,
       table_id: tableId || null,
+      caption: caption || null,
       likes: 0,
       is_approved: true,
       ai_tags: [],

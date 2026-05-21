@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { Button, HStack, Image, Text } from "@chakra-ui/react";
+import { Button, HStack, Image, Text, Input, Box } from "@chakra-ui/react";
 import WebCamera from "./WebCamera";
 
 export default function CameraComposer({ onClose, onSend, onFallbackAlbum, uploading }) {
@@ -13,6 +13,7 @@ export default function CameraComposer({ onClose, onSend, onFallbackAlbum, uploa
   const [lastTap, setLastTap] = useState(0);
   const [previewFile, setPreviewFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [caption, setCaption] = useState("");
   const [error, setError] = useState("");
 
   const setPreview = (file) => {
@@ -52,14 +53,16 @@ export default function CameraComposer({ onClose, onSend, onFallbackAlbum, uploa
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewFile(null);
     setPreviewUrl("");
+    setCaption("");
   };
 
   const send = async () => {
     if (!previewFile) return;
-    await onSend(previewFile);
+    await onSend(previewFile, caption);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewFile(null);
     setPreviewUrl("");
+    setCaption("");
   };
 
   const handleFallback = (files) => {
@@ -94,6 +97,22 @@ export default function CameraComposer({ onClose, onSend, onFallbackAlbum, uploa
       {previewUrl ? (
         <div className="locket-camera-preview">
           <Image src={previewUrl} alt="Ảnh vừa chụp" className="locket-camera-video" />
+          <Box className="locket-caption-input-overlay">
+            <Input
+              placeholder="Thêm chú thích (tùy chọn)..."
+              value={caption}
+              onChange={(e) => setCaption(e.target.value.slice(0, 120))}
+              maxLength={120}
+              size="sm"
+              bg="rgba(0,0,0,0.6)"
+              color="white"
+              _placeholder={{ color: "rgba(255,255,255,0.6)" }}
+              border="1px solid rgba(255,255,255,0.3)"
+            />
+            <Text fontSize="xs" color="rgba(255,255,255,0.5)" mt="1">
+              {caption.length}/120
+            </Text>
+          </Box>
         </div>
       ) : (
         <div onClick={handlePreviewTap}>

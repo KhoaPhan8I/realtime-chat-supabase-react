@@ -152,7 +152,7 @@ export default function EventMedia() {
     if (galleryInputRef.current) galleryInputRef.current.value = "";
   };
 
-  const uploadFiles = async (files, source = "gallery") => {
+  const uploadFiles = async (files, source = "gallery", captionText = "") => {
     const selected = Array.from(files || []).filter((file) => getMediaType(file));
     if (!selected.length || uploading) return;
 
@@ -163,7 +163,13 @@ export default function EventMedia() {
 
     try {
       for (const file of selected) {
-        await uploadEventMedia({ eventId, file, guestName: guestName.trim(), tableId: tableId.trim() });
+        await uploadEventMedia({
+          eventId,
+          file,
+          guestName: guestName.trim(),
+          tableId: tableId.trim(),
+          caption: captionText || null
+        });
       }
       setStatus("Đã đăng lên live feed");
       await refreshMedia({ jumpToLatest: true });
@@ -243,7 +249,7 @@ export default function EventMedia() {
             uploading={uploading}
             onClose={() => setView("feed")}
             onFallbackAlbum={() => galleryInputRef.current?.click()}
-            onSend={(file) => uploadFiles([file], "camera")}
+            onSend={(file, caption) => uploadFiles([file], "camera", caption)}
           />
         ) : (
           <EventFeed

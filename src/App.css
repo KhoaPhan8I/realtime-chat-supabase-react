@@ -240,6 +240,18 @@ a {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
 }
 
+.locket-caption-input-overlay {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 5;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
+}
+
 .locket-camera-video,
 .locket-camera-preview img {
   width: 100%;
