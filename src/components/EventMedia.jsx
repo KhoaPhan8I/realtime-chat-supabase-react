@@ -222,7 +222,8 @@ export default function EventMedia() {
   };
 
   return (
-    <Box className="locket-app">
+    <main className="locket-app">
+      <h1 style={{position: "absolute", left: "-9999px"}}>Locket Widget</h1>
       <Input
         ref={galleryInputRef}
         type="file"
@@ -292,6 +293,6 @@ export default function EventMedia() {
           />
         )}
       </Box>
-    </Box>
+    </main>
   );
 }
